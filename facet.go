@@ -11,7 +11,7 @@ package radarapi
 //  https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin
 // Multiple facets can be passed, even the same with different values. When passing the
 // same facet with different values the logical operation (AND, OR) depends on the actual
-// facet.
+// facet. Each facet is annotated with its operator (see Constants in the corresponding subpackages)
 //
 // Example
 //  category operator is AND, this call returns events which have both the bar/cafe AND theater category

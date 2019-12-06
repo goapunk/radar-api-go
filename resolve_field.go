@@ -19,6 +19,8 @@ import (
 //  ResolveField(referenceField, anotherReference, targetField)
 // The arguments can be any of the event/group/location/term FieldXXXs
 //
+// Example
+//
 // Search result for events showing the title and the field 'offline', which is
 // a reference to the location entity.
 //
@@ -26,9 +28,9 @@ import (
 //  https://radar.squat.net/api/1.2/search/events.json?fields=title,offline
 // In Go
 //  radar := NewRadarClient()
-//	sb := NewSearch(EVENT)
+//  sb := NewSearch(EVENT)
 //  sb.Fields(event.FieldTitle, event.FieldOffline)
-//	raw, err := radar.Search(sb)
+//  raw, err := radar.Search(sb)
 // Result
 //  "346823": {
 //      "offline": [
@@ -83,9 +85,9 @@ import (
 //  https://radar.squat.net/api/1.2/search/events.json?fields=title,offline,offline:address
 // In Go
 //  radar := NewRadarClient()
-//	sb := NewSearch(EVENT)
+//  sb := NewSearch(EVENT)
 //  sb.Fields(event.FieldTitle, event.FieldOffline, ResolveField(event.Offline, location.Address))
-//	raw, err := radar.Search(sb)
+//  raw, err := radar.Search(sb)
 // Result
 //  "346823": {
 //      "offline": [

@@ -10,9 +10,25 @@ import (
 	"golang.org/x/text/language"
 )
 
-// TODO
+// Get all events in Berlin and include the address field of the locations.
 func ExampleResolveField() {
-
+	// https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&fields=title,offline,offline:address
+	radar := NewRadarClient()
+	sb := NewSearch(EVENT)
+	sb.Facets(Facet{event.FacetCity, "Berlin"})
+	sb.Fields(event.FieldTitle, event.FieldOffline, ResolveField(event.FieldOffline, location.FieldAddress))
+	result, err := radar.Search(sb)
+	if err != nil {
+		fmt.Printf("%v", err)
+		return
+	}
+	var events map[string]interface{}
+	err = json.Unmarshal([]byte(result), &events)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	fmt.Printf("%v", events)
 }
 
 // Get event "e81b15f9-663f-4270-b94b-269176cd9f3f".
@@ -142,13 +158,18 @@ func ExampleFacet() {
 		Facet{event.FacetCity, "Berlin"},
 		Facet{event.FacetCategory, "work-space-diy"},
 		Facet{event.FacetDate, "2020-11-24"})
-	sb.Fields(event.FieldTitle, event.FieldOffline)
-	raw, err := radar.Search(sb)
+	result, err := radar.Search(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	fmt.Printf("%v", raw)
+	var events map[string]interface{}
+	err = json.Unmarshal([]byte(result), &events)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	fmt.Printf("%v", events)
 }
 
 // Get all events in Berlin which are not organized/promoted by group "Stressfaktor" (id: 1599)
@@ -158,12 +179,18 @@ func ExampleCreateFilter() {
 	sb := NewSearch(EVENT)
 	sb.Facets(Facet{event.FacetCity, "Berlin"})
 	sb.Filters(CreateFilter(OperatorAnd, event.FieldOgGroupRef, ComparatorNEQ, "1599"))
-	raw, err := radar.Search(sb)
+	result, err := radar.Search(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	fmt.Printf("%v", raw)
+	var events map[string]interface{}
+	err = json.Unmarshal([]byte(result), &events)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	fmt.Printf("%v", events)
 }
 
 // Get all events in Berlin with a start date between 2020-11-03 00:00:00 and 2020-11-25 00:00:00
@@ -173,12 +200,18 @@ func ExampleCreaterRangeFilter() {
 	sb := NewSearch(EVENT)
 	sb.Facets(Facet{event.FacetCity, "Berlin"})
 	sb.Filters(CreaterRangeFilter(FilterEventStartDateTime, "1604358000", "1606258800"))
-	raw, err := radar.Search(sb)
+	result, err := radar.Search(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	fmt.Printf("%v", raw)
+	var events map[string]interface{}
+	err = json.Unmarshal([]byte(result), &events)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	fmt.Printf("%v", events)
 }
 
 // Get all events in Berlin with the category food.
@@ -187,10 +220,16 @@ func ExampleRadarClient_Search() {
 	radar := NewRadarClient()
 	sb := NewSearch(EVENT)
 	sb.Facets(Facet{event.FacetCity, "Berlin"}, Facet{event.FacetCategory, "food"})
-	raw, err := radar.Search(sb)
+	result, err := radar.Search(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	fmt.Printf("%v", raw)
+	var events map[string]interface{}
+	err = json.Unmarshal([]byte(result), &events)
+	if err != nil {
+		fmt.Printf("error: %v", err)
+		return
+	}
+	fmt.Printf("%v", events)
 }

@@ -10,7 +10,7 @@ package radarapi
 //  * ~and: all filters with ~and must evaluate to true
 //  * ~or: at least one of the ~or filters must evaluate to true
 // Comparators:
-//  * ~eq: equals
+//  * ~e: equals
 //  * ~ne: not equal
 //  * ~gt: greater than
 //  * ~gte: greater or equal than
@@ -37,7 +37,7 @@ package radarapi
 // are not possible.
 //
 // A field can't be used in more than one equals filter, i.e. you can't filter for
-// events in Berlin OR Amsterdam because that would require using the field locality twice
+// events in Berlin OR Amsterdam because that would require using the field locality twice.
 //  filter[~and][field_offline:field_address:locality][~eq]=Berlin&filter[~or][field_offline:field_address:locality][~eq]=Amsterdam
 type Filter interface{}
 
