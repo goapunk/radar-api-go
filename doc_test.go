@@ -4,8 +4,6 @@ import (
 	"0xacab.org/radarapi/event"
 	"0xacab.org/radarapi/group"
 	"0xacab.org/radarapi/location"
-	"0xacab.org/radarapi/term"
-	"encoding/json"
 	"fmt"
 	"golang.org/x/text/language"
 )
@@ -14,21 +12,18 @@ import (
 func ExampleResolveField() {
 	// https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&fields=title,offline,offline:address
 	radar := NewRadarClient()
-	sb := NewSearch(EVENT)
+	sb := &SearchBuilder{}
 	sb.Facets(Facet{event.FacetCity, "Berlin"})
 	sb.Fields(event.FieldTitle, event.FieldOffline, ResolveField(event.FieldOffline, location.FieldAddress))
-	result, err := radar.Search(sb)
+	result, err := radar.SearchEvents(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	var events map[string]interface{}
-	err = json.Unmarshal([]byte(result), &events)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
+	if result == nil {
+		fmt.Println("No results")
 	}
-	fmt.Printf("%v", events)
+	fmt.Printf("%v", result)
 }
 
 // Get event "e81b15f9-663f-4270-b94b-269176cd9f3f".
@@ -40,13 +35,7 @@ func ExampleRadarClient_Event() {
 		fmt.Printf("error: %v", err)
 		return
 	}
-	var ev map[string]interface{}
-	err = json.Unmarshal([]byte(result), &ev)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
-	}
-	fmt.Printf("%v", ev[event.FieldTitle])
+	fmt.Printf("%v", result.Title)
 	// Output: Seawatch Soli Fete Tag 1
 }
 
@@ -59,13 +48,7 @@ func ExampleRadarClient_Event_fields() {
 		fmt.Printf("error: %v", err)
 		return
 	}
-	var ev map[string]interface{}
-	err = json.Unmarshal([]byte(result), &ev)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
-	}
-	fmt.Printf("title: %s, status: %s", ev[event.FieldTitle], ev[event.FieldEventStatus])
+	fmt.Printf("title: %s, status: %s", result.Title, result.EventStatus)
 	// Output: title: Seawatch Soli Fete Tag 1, status: confirmed
 }
 
@@ -78,15 +61,7 @@ func ExampleRadarClient_Group() {
 		fmt.Printf("error: %v", err)
 		return
 	}
-	var grp map[string]interface{}
-	err = json.Unmarshal([]byte(result), &grp)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
-	}
-	title := grp[group.FieldTitle]
-	body := grp[group.FieldBody].(map[string]interface{})
-	fmt.Printf("title: %s, description: %s", title, body["value"])
+	fmt.Printf("title: %s, description: %s", result.Title, result.Body.Value)
 	// Output: title: Liebig34, description: <p>Anarcha-Queer-Feminist houseproject in Berlin-Friedrichshain.</p>
 	//<p>Non-smoking bar.</p>
 	//<p> </p>
@@ -101,14 +76,7 @@ func ExampleRadarClient_Location() {
 		fmt.Printf("error: %v", err)
 		return
 	}
-	var loc map[string]interface{}
-	err = json.Unmarshal([]byte(result), &loc)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
-	}
-	address := loc[location.FieldAddress].(map[string]interface{})
-	fmt.Printf("name: %s, street: %s", address["name_line"], address["thoroughfare"])
+	fmt.Printf("name: %s, street: %s", result.Address.NameLine, result.Address.Thoroughfare)
 	// Output: name: Mensch Meier, street: Storkower Str. 121
 }
 
@@ -121,13 +89,7 @@ func ExampleRadarClient_Term() {
 		fmt.Printf("error: %v", err)
 		return
 	}
-	var t map[string]interface{}
-	err = json.Unmarshal([]byte(result), &t)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
-	}
-	fmt.Printf("name: %s, description: %s", t[term.FieldName], t[term.FieldDescription])
+	fmt.Printf("name: %s, description: %s", result.Name, result.Description)
 	// Output: name: bar/cafe, description: <p>somewhere were you can go for a drink and to meet people</p>
 }
 
@@ -140,96 +102,113 @@ func ExampleRadarClient_Term_spanish() {
 		fmt.Printf("error: %v", err)
 		return
 	}
-	var t map[string]interface{}
-	err = json.Unmarshal([]byte(result), &t)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
-	}
-	fmt.Printf("name: %s, description: %s", t[term.FieldName], t[term.FieldDescription])
+	fmt.Printf("name: %s, description: %s", result.Name, result.Description)
 	// Output: name: bar/café, description: <p>para tomarse una copita, conocer gente maja...</p>
 }
 
 // Get all events in Berlin with the category work-space/diy happening on the 2020-11-24
 func ExampleFacet() {
 	radar := NewRadarClient()
-	sb := NewSearch(EVENT)
+	sb := &SearchBuilder{}
 	sb.Facets(
 		Facet{event.FacetCity, "Berlin"},
 		Facet{event.FacetCategory, "work-space-diy"},
 		Facet{event.FacetDate, "2020-11-24"})
-	result, err := radar.Search(sb)
+	result, err := radar.SearchEvents(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	var events map[string]interface{}
-	err = json.Unmarshal([]byte(result), &events)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
+	if result == nil {
+		fmt.Println("No results")
 	}
-	fmt.Printf("%v", events)
+	fmt.Printf("%v", result)
 }
 
 // Get all events in Berlin which are not organized/promoted by group "Stressfaktor" (id: 1599)
 func ExampleCreateFilter() {
 	// https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&filter[~and][og_group_ref][~ne]=1599
 	radar := NewRadarClient()
-	sb := NewSearch(EVENT)
+	sb := &SearchBuilder{}
 	sb.Facets(Facet{event.FacetCity, "Berlin"})
 	sb.Filters(CreateFilter(OperatorAnd, event.FieldOgGroupRef, ComparatorNEQ, "1599"))
-	result, err := radar.Search(sb)
+	result, err := radar.SearchEvents(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	var events map[string]interface{}
-	err = json.Unmarshal([]byte(result), &events)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
+	if result == nil {
+		fmt.Println("No results")
 	}
-	fmt.Printf("%v", events)
+	fmt.Printf("%v", result)
 }
 
 // Get all events in Berlin with a start date between 2020-11-03 00:00:00 and 2020-11-25 00:00:00
 func ExampleCreaterRangeFilter() {
 	//  https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&filter[~and][search_api_aggregation_1][~gt]=1604358000&filter[~or][search_api_aggregation_1][~lt]=1606258800
 	radar := NewRadarClient()
-	sb := NewSearch(EVENT)
+	sb := &SearchBuilder{}
 	sb.Facets(Facet{event.FacetCity, "Berlin"})
 	sb.Filters(CreaterRangeFilter(FilterEventStartDateTime, "1604358000", "1606258800"))
-	result, err := radar.Search(sb)
+	result, err := radar.SearchEvents(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	var events map[string]interface{}
-	err = json.Unmarshal([]byte(result), &events)
-	if err != nil {
-		fmt.Printf("error: %v", err)
-		return
+	if result == nil {
+		fmt.Println("No results")
 	}
-	fmt.Printf("%v", events)
+	fmt.Printf("%v", result)
 }
 
 // Get all events in Berlin with the category food.
 func ExampleRadarClient_Search() {
 	// https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&facets[category][]=food
 	radar := NewRadarClient()
-	sb := NewSearch(EVENT)
+	sb := &SearchBuilder{}
 	sb.Facets(Facet{event.FacetCity, "Berlin"}, Facet{event.FacetCategory, "food"})
-	result, err := radar.Search(sb)
+	result, err := radar.SearchEvents(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
 	}
-	var events map[string]interface{}
-	err = json.Unmarshal([]byte(result), &events)
+	if result == nil {
+		fmt.Println("No results")
+	}
+	fmt.Printf("%v", result)
+}
+
+// Get all groups in Berlin with the category bar/cafe.
+func ExampleRadarClient_Search_group() {
+	// https://radar.squat.net/api/1.2/search/groups.json?facets[city][]=berlin&facets[category][]=bar-cafe
+	radar := NewRadarClient()
+	sb := &SearchBuilder{}
+	sb.Facets(Facet{group.FacetCity, "berlin"}, Facet{group.FacetCategory, "bar-cafe"})
+	result, err := radar.SearchGroup(sb)
 	if err != nil {
-		fmt.Printf("error: %v", err)
+		fmt.Printf("%v", err)
 		return
 	}
-	fmt.Printf("%v", events)
+	if result == nil {
+		fmt.Println("No results")
+	}
+	fmt.Printf("%v", result)
+}
+
+// Get all locations in Berlin.
+func ExampleRadarClient_Search_location() {
+	// https://radar.squat.net/api/1.2/search/location.json?facets[locality][]=Berlin
+	radar := NewRadarClient()
+	sb := &SearchBuilder{}
+	sb.Facets(Facet{location.FacetLocality, "Berlin"})
+	sb.Fields(location.FieldAll)
+	result, err := radar.SearchLocation(sb)
+	if err != nil {
+		fmt.Printf("%v", err)
+		return
+	}
+	if result == nil {
+		fmt.Println("No results")
+	}
+	fmt.Printf("%v", result)
 }

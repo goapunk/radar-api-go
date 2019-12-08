@@ -20,7 +20,7 @@ package radarapi
 //  https://radar.squat.net/api/1.2/search/events.json?facets[group][]=339006&fields=*&facets[group][]=1599
 type Facet struct {
 	// One of event/group/location/term FacetXXXs. Must match the entity you are searching for,
-	// e.g. when searching for an event it must be from event.FacetXXXX
+	// e.g. when searching for an Event it must be from event.FacetXXXX
 	Key   string
 	Value string
 }

@@ -28,7 +28,7 @@ import (
 //  https://radar.squat.net/api/1.2/search/events.json?fields=title,offline
 // In Go
 //  radar := NewRadarClient()
-//  sb := NewSearch(EVENT)
+//  sb := NewSearch(typeEvent)
 //  sb.Fields(event.FieldTitle, event.FieldOffline)
 //  raw, err := radar.Search(sb)
 // Result
@@ -85,7 +85,7 @@ import (
 //  https://radar.squat.net/api/1.2/search/events.json?fields=title,offline,offline:address
 // In Go
 //  radar := NewRadarClient()
-//  sb := NewSearch(EVENT)
+//  sb := NewSearch(typeEvent)
 //  sb.Fields(event.FieldTitle, event.FieldOffline, ResolveField(event.Offline, location.Address))
 //  raw, err := radar.Search(sb)
 // Result

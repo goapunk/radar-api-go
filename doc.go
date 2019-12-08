@@ -25,6 +25,7 @@
 // The rest API provides endpoints for each of those entities:
 //
 //  event: https://radar.squat.net/api/1.2/node/[uuid].json
+//  file:  https://radar.squat.net/api/1.2/file/[uuid].json
 //  group: https://radar.squat.net/api/1.2/node/[uuid].json
 //  location: https://radar.squat.net/api/1.2/location/[uuid].json
 //  term: https://radar.squat.net/api/1.2/taxonomy_term/[uuid].json

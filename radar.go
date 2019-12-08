@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"golang.org/x/text/language"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -21,17 +22,6 @@ func NewRadarClient() *RadarClient {
 	return &RadarClient{
 		&http.Client{Timeout: time.Second * 10},
 	}
-}
-
-// Search the radar database.
-//
-// The returned string is the raw json response. See the examples on how to umarshal it.
-func (radar *RadarClient) Search(search *SearchBuilder) (string, error) {
-	u, err := prepareSearchUrl(search)
-	if err != nil {
-		return "", err
-	}
-	return radar.runQuery(u)
 }
 
 func (radar *RadarClient) prepareAndRunEntityQuery(rawUrl string, language *language.Tag, fields []string) (string, error) {
@@ -52,6 +42,7 @@ func (radar *RadarClient) prepareAndRunEntityQuery(rawUrl string, language *lang
 }
 
 func (radar *RadarClient) runQuery(u *url.URL) (string, error) {
+	log.Print(u)
 	resp, err := radar.web.Get(u.String())
 	if err != nil {
 		fmt.Print(err.Error())

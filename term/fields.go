@@ -1,7 +1,5 @@
 package term
 
-//noinspection GoUnusedConst
-
 // Available fields for a term.
 const (
 	// All will return all available fields.

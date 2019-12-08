@@ -1,28 +1,33 @@
 package radarapi
 
 import (
+	"encoding/json"
 	"fmt"
 	lang "golang.org/x/text/language"
 	"log"
 	"net/url"
+	"strconv"
+	"strings"
 )
 
 const (
 	searchEventUrl    = baseUrl + "search/events.json"
-	searchGroupUrl    = baseUrl + "%search/groups.json"
+	searchGroupUrl    = baseUrl + "search/groups.json"
 	searchLocationUrl = baseUrl + "search/location.json"
 	searchTermUrl     = baseUrl + "search/term.json"
 )
 
 const (
-	// Entity types
-	EVENT = iota
-	GROUP
-	LOCATION
-	TERM
+	typeEvent = iota
+	typeGroup
+	typeLocation
+	typeTerm
 )
 
-type search struct {
+// A SearchBuilder is used to create a search request which can be passed to RadarClient.Search().
+//
+// The zero value is ready to use.
+type SearchBuilder struct {
 	entity   int
 	key      string
 	language lang.Tag
@@ -34,28 +39,132 @@ type search struct {
 	filters  []Filter
 }
 
-// A SearchBuilder is used to create a search request which can be passed to RadarClient.Search().
-//
-// Don't use this directly. Create a new SearchBuilder with NewSearch().
-type SearchBuilder struct {
-	search *search
+// The response to a search request will return a list of available facets.
+type ResultFacet struct {
+	Filter    string `json:"filter"`
+	Count     int64  `json:"count"`
+	Formatted string `json:"formatted"`
 }
 
-// Creates a new SearchBuilder which allows searching for the given entity.
+func (e *ResultFacet) UnmarshalJSON(data []byte) error {
+	if len(data) < 3 {
+		return nil
+	}
+	var buf map[string]interface{}
+	err := json.Unmarshal(data, &buf)
+	if err != nil {
+		return err
+	}
+	e.Filter = buf["filter"].(string)
+	switch buf["count"].(type) {
+	case int64:
+		e.Count = buf["count"].(int64)
+	case int:
+		e.Count = int64(buf["count"].(int))
+	case string:
+		v, err := strconv.ParseInt(buf["count"].(string), 10, 64)
+		if err != nil {
+			return err
+		}
+		e.Count = v
+	}
+	return nil
+}
+
+// Search the radar database for Events. Returns nil if no results were found.
+func (radar *RadarClient) SearchEvents(sb *SearchBuilder) (*SearchResultEvents, error) {
+	sb.entity = typeEvent
+	res, err := radar.search(sb)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, nil
+	}
+	return res.(*SearchResultEvents), nil
+}
+
+// Search the radar database for Groups. Returns nil if no results were found.
+func (radar *RadarClient) SearchGroup(sb *SearchBuilder) (*SearchResultGroups, error) {
+	sb.entity = typeGroup
+	res, err := radar.search(sb)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, nil
+	}
+	return res.(*SearchResultGroups), nil
+}
+
+// Search the radar database for Locations. Returns nil if no results were found.
 //
-// Possible values are EVENT, GROUP, LOCATION, TERM (see Constants above).
-func NewSearch(entity int) *SearchBuilder {
-	return &SearchBuilder{search: &search{entity: entity}}
+// Note: By default, no fields are returned for the locations. Use SearchBuilder.Fields() to get a meaningful response.
+func (radar *RadarClient) SearchLocation(sb *SearchBuilder) (*SearchResultLocations, error) {
+	sb.entity = typeLocation
+	res, err := radar.search(sb)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, nil
+	}
+	return res.(*SearchResultLocations), nil
+}
+
+// Search the radar database for Terms. Returns nil if no result were found.
+func (radar *RadarClient) SearchTerm(sb *SearchBuilder) (*SearchResultTerms, error) {
+	sb.entity = typeTerm
+	res, err := radar.search(sb)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		return nil, nil
+	}
+	return res.(*SearchResultTerms), nil
+}
+
+func (radar *RadarClient) search(sb *SearchBuilder) (interface{}, error) {
+	u, err := prepareSearchUrl(sb)
+	if err != nil {
+		return "", err
+	}
+	raw, err := radar.runQuery(u)
+	if err != nil {
+		return nil, err
+	}
+	if raw == `{"result":false,"count":0,"facets":null}` {
+		return nil, nil
+	}
+	dec := json.NewDecoder(strings.NewReader(raw))
+	//	dec.DisallowUnknownFields()
+	var buf interface{}
+	switch sb.entity {
+	case typeEvent:
+		buf = &SearchResultEvents{}
+	case typeGroup:
+		buf = &SearchResultGroups{}
+	case typeLocation:
+		buf = &SearchResultLocations{}
+	case typeTerm:
+		buf = &SearchResultTerms{}
+	}
+	err = dec.Decode(buf)
+	if err != nil {
+		return nil, fmt.Errorf("error: %v", err)
+	}
+	return buf, nil
 }
 
 // Sets a key for full-text search.
 func (sb *SearchBuilder) Key(key string) {
-	sb.search.key = key
+	sb.key = key
 }
 
 // Sets the language for the response.
 func (sb *SearchBuilder) Language(language lang.Tag) {
-	sb.search.language = language
+	sb.language = language
 }
 
 // Sets the amount of results returned.
@@ -65,7 +174,7 @@ func (sb *SearchBuilder) Limit(limit uint16) {
 	if limit > 500 {
 		log.Printf("warning: max. limit of 500 exceeded :%d. Limit set to 500", limit)
 	} else {
-		sb.search.limit = limit
+		sb.limit = limit
 	}
 }
 
@@ -73,59 +182,58 @@ func (sb *SearchBuilder) Limit(limit uint16) {
 //
 // Only works for indexed fields.
 func (sb *SearchBuilder) Sort(field string, descending bool) {
-	sb.search.sort = field
-	sb.search.desc = descending
+	sb.sort = field
+	sb.desc = descending
 }
 
 // Sets the facets which will be used to filter the results. See Facet above.
 func (sb *SearchBuilder) Facets(facets ...Facet) {
 	if facets != nil {
-		sb.search.facets = facets
+		sb.facets = facets
 	}
 }
+
 // Sets the fields which will be returned for each result.
 //
-// Fields must come from the entity which has been passed to NewSearch(),
-// e.g. for EVENT event.FieldXXXX. See subpackages for the available fields for each entity.
+// Fields must come from the entity you are searching for,
+// e.g. for Event event.FieldXXXX. See subpackages for the available fields for each entity.
 func (sb *SearchBuilder) Fields(fields ...string) {
 	if fields != nil {
-		sb.search.fields = fields
+		sb.fields = fields
 	}
 }
 
 // Sets the filters which will be used to filter the results. See Filter above.
 func (sb *SearchBuilder) Filters(filters ...Filter) {
 	if filters != nil {
-		sb.search.filters = filters
+		sb.filters = filters
 	}
 }
 
 func prepareSearchUrl(sb *SearchBuilder) (*url.URL, error) {
 	var addr string
-	switch sb.search.entity {
-	case EVENT:
+	switch sb.entity {
+	case typeEvent:
 		addr = searchEventUrl
-	case GROUP:
+	case typeGroup:
 		addr = searchGroupUrl
-	case LOCATION:
+	case typeLocation:
 		addr = searchLocationUrl
-	case TERM:
+	case typeTerm:
 		addr = searchTermUrl
-	default:
-		return nil, fmt.Errorf("error: entity must be one of EVENT, GROUP, LOCATION or TERM")
 	}
 	u, err := url.Parse(addr)
 	if err != nil {
 		return nil, err
 	}
 	query := u.Query()
-	if sb.search.facets != nil {
-		for _, facet := range sb.search.facets {
+	if sb.facets != nil {
+		for _, facet := range sb.facets {
 			query.Add(fmt.Sprintf("facets[%s][]", facet.Key), facet.Value)
 		}
 	}
-	if sb.search.filters != nil {
-		for _, f := range sb.search.filters {
+	if sb.filters != nil {
+		for _, f := range sb.filters {
 			switch f.(type) {
 			case filter:
 				nf := f.(filter)
@@ -137,14 +245,14 @@ func prepareSearchUrl(sb *SearchBuilder) (*url.URL, error) {
 			}
 		}
 	}
-	if sb.search.limit > 0 {
-		query.Set("limit", string(sb.search.limit))
+	if sb.limit > 0 {
+		query.Set("limit", string(sb.limit))
 	}
-	if sb.search.key != "" {
-		query.Set("keys", sb.search.key)
+	if sb.key != "" {
+		query.Set("keys", sb.key)
 	}
-	if len(sb.search.fields) != 0 {
-		query.Set("fields", fieldsToCommaString(sb.search.fields))
+	if len(sb.fields) != 0 {
+		query.Set("fields", fieldsToCommaString(sb.fields))
 	}
 	u.RawQuery = query.Encode()
 	return u, nil

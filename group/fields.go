@@ -12,7 +12,7 @@ const (
 	FieldEmail                      = "email"
 	FieldLink                       = "link"
 	FieldOffline                    = "offline"
-	FieldOpeningTheme               = "opening_times"
+	FieldOpeningTimes               = "opening_times"
 	FieldPhone                      = "phone"
 	FieldTopic                      = "topic"
 	FieldNotifications              = "notifications"

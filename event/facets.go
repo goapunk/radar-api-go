@@ -13,7 +13,7 @@ const (
 	FacetCountry = "country"
 	// The date must be in the format YY YY-MM or YYYY-MM-DD
 	// operator: or
-	FacetDate  = "date"
+	FacetDate = "date"
 	// price category, e.g. "free-121"
 	FacetPrice = "price"
 	// Topic tag, e.g. "sport", "vegan"

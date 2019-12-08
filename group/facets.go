@@ -27,5 +27,5 @@ const (
 	// operator: and
 	FacetCategory = "category"
 	// operator: and
-	FacetTitle    = "title"
+	FacetTitle = "title"
 )
