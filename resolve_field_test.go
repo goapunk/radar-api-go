@@ -1,8 +1,8 @@
 package radarapi
 
 import (
-	e "0xacab.org/radarapi/event"
-	l "0xacab.org/radarapi/location"
+	e "github.com/goapunk/radar-api-go/event"
+	l "github.com/goapunk/radar-api-go/location"
 	"testing"
 )
 

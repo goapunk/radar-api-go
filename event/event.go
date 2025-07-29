@@ -1,10 +1,10 @@
 package event
 
 import (
-	"0xacab.org/radarapi/file"
-	"0xacab.org/radarapi/group"
-	"0xacab.org/radarapi/location"
-	"0xacab.org/radarapi/term"
+	"github.com/goapunk/radar-api-go/file"
+	"github.com/goapunk/radar-api-go/group"
+	"github.com/goapunk/radar-api-go/location"
+	"github.com/goapunk/radar-api-go/term"
 	"encoding/json"
 )
 

@@ -1,9 +1,9 @@
 package radarapi
 
 import (
-	"0xacab.org/radarapi/event"
-	"0xacab.org/radarapi/group"
-	"0xacab.org/radarapi/location"
+	"github.com/goapunk/radar-api-go/event"
+	"github.com/goapunk/radar-api-go/group"
+	"github.com/goapunk/radar-api-go/location"
 	"testing"
 )
 

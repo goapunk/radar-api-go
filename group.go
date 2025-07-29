@@ -1,7 +1,7 @@
 package radarapi
 
 import (
-	"0xacab.org/radarapi/group"
+	"github.com/goapunk/radar-api-go/group"
 	"encoding/json"
 	"fmt"
 	lang "golang.org/x/text/language"
