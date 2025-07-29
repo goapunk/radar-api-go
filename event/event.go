@@ -16,7 +16,7 @@ type Event struct {
 	OgGroupRef                 []*group.Group       `json:"og_group_ref"`
 	OgGroupRequest             []*group.Group       `json:"og_group_request"`
 	DateTime                   []*DateTime          `json:"date_time"`
-	Image                      []*file.File         `json:"image"`
+	Image                      *file.File           `json:"image"`
 	Price                      []string             `json:"price"`
 	PriceCategory              []*term.Term         `json:"price_category"`
 	EventStatus                string               `json:"event_status"`
