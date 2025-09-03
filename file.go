@@ -1,16 +1,16 @@
 package radarapi
 
 import (
-	"github.com/goapunk/radar-api-go/file"
 	"encoding/json"
 	"fmt"
+	"github.com/goapunk/radar-api-go/file"
 	lang "golang.org/x/text/language"
 	"strings"
 )
 
 // Get the File associated with uuid. If no fields are specified the default are returned.
 func (radar *RadarClient) File(uuid string, language *lang.Tag, fields ...string) (*file.File, error) {
-	rawUrl := fmt.Sprintf("%sfile/%s.json", baseUrl, uuid)
+	rawUrl := fmt.Sprintf("file/%s.json", uuid)
 	raw, err := radar.prepareAndRunEntityQuery(rawUrl, language, fields)
 	if err != nil {
 		return nil, err

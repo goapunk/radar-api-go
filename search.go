@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	searchEventUrl    = baseUrl + "search/events.json"
-	searchGroupUrl    = baseUrl + "search/groups.json"
-	searchLocationUrl = baseUrl + "search/location.json"
-	searchTermUrl     = baseUrl + "search/term.json"
+	searchEventUrl    = "search/events.json"
+	searchGroupUrl    = "search/groups.json"
+	searchLocationUrl = "search/location.json"
+	searchTermUrl     = "search/term.json"
 )
 
 const (
@@ -25,18 +25,20 @@ const (
 )
 
 // A SearchBuilder is used to create a search request which can be passed to RadarClient.Search().
+// Use NewSearchBuilder() to create this instead of &SearchBuilder.
 //
 // The zero value is ready to use.
 type SearchBuilder struct {
 	entity   int
 	key      string
 	language lang.Tag
-	limit    uint16
+	limit    uint64
 	sort     string
 	desc     bool
 	facets   []Facet
 	fields   []string
 	filters  []Filter
+	baseUrl  string
 }
 
 // The response to a search request will return a list of available facets.
@@ -69,6 +71,10 @@ func (e *ResultFacet) UnmarshalJSON(data []byte) error {
 		e.Count = v
 	}
 	return nil
+}
+
+func (radar *RadarClient) NewSearchBuilder() *SearchBuilder {
+	return &SearchBuilder{baseUrl: radar.baseUrl}
 }
 
 // Search the radar database for Events. Returns nil if no results were found.
@@ -151,6 +157,7 @@ func (radar *RadarClient) search(sb *SearchBuilder) (interface{}, error) {
 		buf = &SearchResultTerms{}
 	}
 	err = dec.Decode(buf)
+
 	if err != nil {
 		return nil, fmt.Errorf("error: %v", err)
 	}
@@ -170,7 +177,7 @@ func (sb *SearchBuilder) Language(language lang.Tag) {
 // Sets the amount of results returned.
 //
 // Must be 0 <= limit <= 500
-func (sb *SearchBuilder) Limit(limit uint16) {
+func (sb *SearchBuilder) Limit(limit uint64) {
 	if limit > 500 {
 		log.Printf("warning: max. limit of 500 exceeded :%d. Limit set to 500", limit)
 	} else {
@@ -222,7 +229,7 @@ func prepareSearchUrl(sb *SearchBuilder) (*url.URL, error) {
 	case typeTerm:
 		addr = searchTermUrl
 	}
-	u, err := url.Parse(addr)
+	u, err := url.Parse(sb.baseUrl + "/" + addr)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +253,7 @@ func prepareSearchUrl(sb *SearchBuilder) (*url.URL, error) {
 		}
 	}
 	if sb.limit > 0 {
-		query.Set("limit", string(sb.limit))
+		query.Set("limit", strconv.FormatUint(sb.limit, 10))
 	}
 	if sb.key != "" {
 		query.Set("keys", sb.key)

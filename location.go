@@ -1,9 +1,9 @@
 package radarapi
 
 import (
-	"github.com/goapunk/radar-api-go/location"
 	"encoding/json"
 	"fmt"
+	"github.com/goapunk/radar-api-go/location"
 	lang "golang.org/x/text/language"
 	"strings"
 )
@@ -17,7 +17,7 @@ type SearchResultLocations struct {
 
 // Get the Location associated with uuid. If no fields are specified the default are returned.
 func (radar *RadarClient) Location(uuid string, language *lang.Tag, fields ...string) (*location.Location, error) {
-	rawUrl := fmt.Sprintf("%slocation/%s.json", baseUrl, uuid)
+	rawUrl := fmt.Sprintf("location/%s.json", uuid)
 	raw, err := radar.prepareAndRunEntityQuery(rawUrl, language, fields)
 	dec := json.NewDecoder(strings.NewReader(raw))
 	dec.DisallowUnknownFields()
