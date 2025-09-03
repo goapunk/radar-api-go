@@ -1,10 +1,10 @@
 package radarapi
 
 import (
+	"fmt"
 	"github.com/goapunk/radar-api-go/event"
 	"github.com/goapunk/radar-api-go/group"
 	"github.com/goapunk/radar-api-go/location"
-	"fmt"
 	"golang.org/x/text/language"
 )
 
@@ -12,7 +12,7 @@ import (
 func ExampleResolveField() {
 	// https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&fields=title,offline,offline:address
 	radar := NewRadarClient()
-	sb := &SearchBuilder{}
+	sb := radar.NewSearchBuilder()
 	sb.Facets(Facet{event.FacetCity, "Berlin"})
 	sb.Fields(event.FieldTitle, event.FieldOffline, ResolveField(event.FieldOffline, location.FieldAddress))
 	result, err := radar.SearchEvents(sb)
@@ -109,7 +109,7 @@ func ExampleRadarClient_Term_spanish() {
 // Get all events in Berlin with the category work-space/diy happening on the 2020-11-24
 func ExampleFacet() {
 	radar := NewRadarClient()
-	sb := &SearchBuilder{}
+	sb := radar.NewSearchBuilder()
 	sb.Facets(
 		Facet{event.FacetCity, "Berlin"},
 		Facet{event.FacetCategory, "work-space-diy"},
@@ -129,7 +129,7 @@ func ExampleFacet() {
 func ExampleCreateFilter() {
 	// https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&filter[~and][og_group_ref][~ne]=1599
 	radar := NewRadarClient()
-	sb := &SearchBuilder{}
+	sb := radar.NewSearchBuilder()
 	sb.Facets(Facet{event.FacetCity, "Berlin"})
 	sb.Filters(CreateFilter(OperatorAnd, event.FieldOgGroupRef, ComparatorNEQ, "1599"))
 	result, err := radar.SearchEvents(sb)
@@ -147,7 +147,7 @@ func ExampleCreateFilter() {
 func ExampleCreaterRangeFilter() {
 	//  https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&filter[~and][search_api_aggregation_1][~gt]=1604358000&filter[~or][search_api_aggregation_1][~lt]=1606258800
 	radar := NewRadarClient()
-	sb := &SearchBuilder{}
+	sb := radar.NewSearchBuilder()
 	sb.Facets(Facet{event.FacetCity, "Berlin"})
 	sb.Filters(CreaterRangeFilter(FilterEventStartDateTime, "1604358000", "1606258800"))
 	result, err := radar.SearchEvents(sb)
@@ -162,10 +162,10 @@ func ExampleCreaterRangeFilter() {
 }
 
 // Get all events in Berlin with the category food.
-func ExampleRadarClient_Search() {
+func ExampleRadarClient_search() {
 	// https://radar.squat.net/api/1.2/search/events.json?facets[city][]=Berlin&facets[category][]=food
 	radar := NewRadarClient()
-	sb := &SearchBuilder{}
+	sb := radar.NewSearchBuilder()
 	sb.Facets(Facet{event.FacetCity, "Berlin"}, Facet{event.FacetCategory, "food"})
 	result, err := radar.SearchEvents(sb)
 	if err != nil {
@@ -179,10 +179,10 @@ func ExampleRadarClient_Search() {
 }
 
 // Get all groups in Berlin with the category bar/cafe.
-func ExampleRadarClient_Search_group() {
+func ExampleRadarClient_search_group() {
 	// https://radar.squat.net/api/1.2/search/groups.json?facets[city][]=berlin&facets[category][]=bar-cafe
 	radar := NewRadarClient()
-	sb := &SearchBuilder{}
+	sb := radar.NewSearchBuilder()
 	sb.Facets(Facet{group.FacetCity, "berlin"}, Facet{group.FacetCategory, "bar-cafe"})
 	result, err := radar.SearchGroup(sb)
 	if err != nil {
@@ -196,10 +196,10 @@ func ExampleRadarClient_Search_group() {
 }
 
 // Get all locations in Berlin.
-func ExampleRadarClient_Search_location() {
+func ExampleRadarClient_search_location() {
 	// https://radar.squat.net/api/1.2/search/location.json?facets[locality][]=Berlin
 	radar := NewRadarClient()
-	sb := &SearchBuilder{}
+	sb := radar.NewSearchBuilder()
 	sb.Facets(Facet{location.FacetLocality, "Berlin"})
 	sb.Fields(location.FieldAll)
 	result, err := radar.SearchLocation(sb)

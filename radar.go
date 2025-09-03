@@ -20,28 +20,35 @@ import (
 	"fmt"
 	"golang.org/x/text/language"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
 )
 
-const baseUrl = "https://radar.squat.net/api/1.2/"
+const defautlBaseUrl = "https://radar.squat.net/api/1.2"
 
 type RadarClient struct {
-	web *http.Client
+	web     *http.Client
+	baseUrl string
 }
 
 // Returns an instance of RadarClient which can be used to interact with the
 // radar server.
 func NewRadarClient() *RadarClient {
 	return &RadarClient{
-		&http.Client{Timeout: time.Second * 10},
+		web:     &http.Client{Timeout: time.Second * 10},
+		baseUrl: defautlBaseUrl,
+	}
+}
+
+func (radar *RadarClient) SetBaseUrl(baseUrl string) {
+	if baseUrl != "" {
+		radar.baseUrl = baseUrl
 	}
 }
 
 func (radar *RadarClient) prepareAndRunEntityQuery(rawUrl string, language *language.Tag, fields []string) (string, error) {
-	u, err := url.Parse(rawUrl)
+	u, err := url.Parse(radar.baseUrl + "/" + rawUrl)
 	if err != nil {
 		return "", err
 	}
@@ -58,7 +65,6 @@ func (radar *RadarClient) prepareAndRunEntityQuery(rawUrl string, language *lang
 }
 
 func (radar *RadarClient) runQuery(u *url.URL) (string, error) {
-	log.Print(u)
 	resp, err := radar.web.Get(u.String())
 	if err != nil {
 		fmt.Print(err.Error())
