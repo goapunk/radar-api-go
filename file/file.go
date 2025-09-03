@@ -1,6 +1,8 @@
 package file
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // Available fields for a file.
 const (
@@ -32,6 +34,8 @@ type File struct {
 	ReferenceUri      string `json:"uri,omitempty"`
 	ReferenceId       string `json:"id,omitempty"`
 	ReferenceResource string `json:"resource,omitempty"`
+	// Only seems to be displayed in search results, not in event details
+	ReferenceFilename string `json:"filename,omitempty"`
 }
 
 func (e *File) UnmarshalJSON(data []byte) error {
