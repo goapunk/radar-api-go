@@ -3,11 +3,12 @@ package radarapi
 import (
 	"encoding/json"
 	"fmt"
-	lang "golang.org/x/text/language"
-	"log"
+	"log/slog"
 	"net/url"
 	"strconv"
 	"strings"
+
+	lang "golang.org/x/text/language"
 )
 
 const (
@@ -39,6 +40,7 @@ type SearchBuilder struct {
 	fields   []string
 	filters  []Filter
 	baseUrl  string
+	log      *slog.Logger
 }
 
 // The response to a search request will return a list of available facets.
@@ -74,7 +76,10 @@ func (e *ResultFacet) UnmarshalJSON(data []byte) error {
 }
 
 func (radar *RadarClient) NewSearchBuilder() *SearchBuilder {
-	return &SearchBuilder{baseUrl: radar.baseUrl}
+	return &SearchBuilder{
+		baseUrl: radar.baseUrl,
+		log:     radar.log,
+	}
 }
 
 // Search the radar database for Events. Returns nil if no results were found.
@@ -179,7 +184,7 @@ func (sb *SearchBuilder) Language(language lang.Tag) {
 // Must be 0 <= limit <= 500
 func (sb *SearchBuilder) Limit(limit uint64) {
 	if limit > 500 {
-		log.Printf("warning: max. limit of 500 exceeded :%d. Limit set to 500", limit)
+		sb.log.Warn(fmt.Sprintf("max. limit of 500 exceeded: %d. Limit set to 500", limit))
 	} else {
 		sb.limit = limit
 	}
