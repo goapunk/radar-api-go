@@ -101,7 +101,7 @@ func (radar *RadarClient) prepareAndRunEntityQuery(rawUrl string, language *lang
 func (radar *RadarClient) runQuery(u *url.URL) (string, error) {
 	resp, err := radar.web.Get(u.String())
 	if err != nil {
-		fmt.Print(err.Error())
+		radar.log.Error(err.Error())
 		return "", err
 	}
 	//noinspection GoUnhandledErrorResult
@@ -111,7 +111,7 @@ func (radar *RadarClient) runQuery(u *url.URL) (string, error) {
 	}
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Print(err.Error())
+		radar.log.Error(err.Error())
 		return "", err
 	}
 	return string(body), nil
