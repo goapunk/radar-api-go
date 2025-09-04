@@ -18,11 +18,14 @@ package radarapi
 
 import (
 	"fmt"
-	"golang.org/x/text/language"
 	"io/ioutil"
+	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
+
+	"golang.org/x/text/language"
 )
 
 const defautlBaseUrl = "https://radar.squat.net/api/1.2"
@@ -30,21 +33,52 @@ const defautlBaseUrl = "https://radar.squat.net/api/1.2"
 type RadarClient struct {
 	web     *http.Client
 	baseUrl string
+	timeout int
+	log     *slog.Logger
+}
+
+// WithTimeout configures a timeout for RadarClient.
+func WithTimeout(timeout int) func(*RadarClient) {
+	return func(r *RadarClient) {
+		r.timeout = timeout
+	}
+}
+
+// WithLogger configures a logger for RadarClient.
+func WithLogger(logger *slog.Logger) func(*RadarClient) {
+	return func(r *RadarClient) {
+		r.log = logger
+	}
 }
 
 // Returns an instance of RadarClient which can be used to interact with the
 // radar server.
-func NewRadarClient() *RadarClient {
-	return &RadarClient{
-		web:     &http.Client{Timeout: time.Second * 10},
+func NewRadarClient(opts ...func(*RadarClient)) *RadarClient {
+	radarClient := &RadarClient{
+		web:     &http.Client{Timeout: time.Second * 30},
 		baseUrl: defautlBaseUrl,
+		log:     slog.New(slog.NewTextHandler(os.Stdout, nil)),
 	}
+
+	for _, optFunc := range opts {
+		optFunc(radarClient)
+	}
+
+	return radarClient
 }
 
 func (radar *RadarClient) SetBaseUrl(baseUrl string) {
 	if baseUrl != "" {
 		radar.baseUrl = baseUrl
 	}
+}
+
+func (radar *RadarClient) GetLogger() *slog.Logger {
+	return radar.log
+}
+
+func (radar *RadarClient) GetTimeout() int {
+	return radar.timeout
 }
 
 func (radar *RadarClient) prepareAndRunEntityQuery(rawUrl string, language *language.Tag, fields []string) (string, error) {
