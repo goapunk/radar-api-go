@@ -184,7 +184,7 @@ func (sb *SearchBuilder) Language(language lang.Tag) {
 // Must be 0 <= limit <= 500
 func (sb *SearchBuilder) Limit(limit uint64) {
 	if limit > 500 {
-		sb.log.Warn(fmt.Sprintf("warning: max. limit of 500 exceeded :%d. Limit set to 500", limit))
+		sb.log.Warn(fmt.Sprintf("max. limit of 500 exceeded: %d. Limit set to 500", limit))
 	} else {
 		sb.limit = limit
 	}
