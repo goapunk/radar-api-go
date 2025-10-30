@@ -102,9 +102,6 @@ type User struct {
 }
 
 func (e *Event) UnmarshalJSON(data []byte) error {
-	if len(data) < 3 {
-		return nil
-	}
 	type tmp *Event
 	err := json.Unmarshal(data, tmp(e))
 	return err
@@ -123,6 +120,18 @@ func (e *Link) UnmarshalJSON(data []byte) error {
 func (e *User) UnmarshalJSON(data []byte) error {
 	type tmp *User
 	return unmarshalJSON(tmp(e), data)
+}
+
+func (e *Image) UnmarshalJSON(data []byte) error {
+	if string(data) == "[]" {
+		return nil
+	}
+
+	type tmp *Image
+	if err := unmarshalJSON(tmp(e), data); err != nil {
+		return err
+	}
+	return nil
 }
 
 func unmarshalJSON(e interface{}, data []byte) error {
