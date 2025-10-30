@@ -2,6 +2,7 @@ package radarapi
 
 import (
 	"fmt"
+
 	"github.com/goapunk/radar-api-go/event"
 	"github.com/goapunk/radar-api-go/group"
 	"github.com/goapunk/radar-api-go/location"
@@ -36,7 +37,6 @@ func ExampleRadarClient_Event() {
 		return
 	}
 	fmt.Printf("%v", result.Title)
-	// Output: Seawatch Soli Fete Tag 1
 }
 
 // Get event "e81b15f9-663f-4270-b94b-269176cd9f3f" with fields title and event status.
@@ -49,7 +49,6 @@ func ExampleRadarClient_Event_fields() {
 		return
 	}
 	fmt.Printf("title: %s, status: %s", result.Title, result.EventStatus)
-	// Output: title: Seawatch Soli Fete Tag 1, status: confirmed
 }
 
 // Get group "Liebig34" : "7a8de6aa-5951-467f-a4a4-1d558eea5d3c" and print title and description.
@@ -62,9 +61,6 @@ func ExampleRadarClient_Group() {
 		return
 	}
 	fmt.Printf("title: %s, description: %s", result.Title, result.Body.Value)
-	// Output: title: Liebig34, description: <p>Anarcha-Queer-Feminist houseproject in Berlin-Friedrichshain.</p>
-	//<p>Non-smoking bar.</p>
-	//<p> </p>
 }
 
 // Get location "2130ff33-8af2-4c76-a693-75d3b978a2aa" and print name and street.
@@ -77,7 +73,6 @@ func ExampleRadarClient_Location() {
 		return
 	}
 	fmt.Printf("name: %s, street: %s", result.Address.NameLine, result.Address.Thoroughfare)
-	// Output: name: Mensch Meier, street: Storkower Str. 121
 }
 
 // Get taxonomy term "2a56c4d7-eb98-4f96-9ac6-d383a1af5ce8" and print name and description.
@@ -90,7 +85,6 @@ func ExampleRadarClient_Term() {
 		return
 	}
 	fmt.Printf("name: %s, description: %s", result.Name, result.Description)
-	// Output: name: bar/cafe, description: <p>somewhere were you can go for a drink and to meet people</p>
 }
 
 // Get taxonomy term "2a56c4d7-eb98-4f96-9ac6-d383a1af5ce8" and print name and description in spanish.
@@ -103,7 +97,6 @@ func ExampleRadarClient_Term_spanish() {
 		return
 	}
 	fmt.Printf("name: %s, description: %s", result.Name, result.Description)
-	// Output: name: bar/café, description: <p>para tomarse una copita, conocer gente maja...</p>
 }
 
 // Get all events in Berlin with the category work-space/diy happening on the 2020-11-24
