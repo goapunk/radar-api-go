@@ -10,5 +10,5 @@ Golang bindings for the [Radar](https://radar.squat.net/en) API.
 ### Test
 
 ```
-go test --skip "Example*"
+go test
 ```
