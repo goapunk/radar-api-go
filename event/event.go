@@ -107,28 +107,28 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 	return err
 }
 
-func (e *Body) UnmarshalJSON(data []byte) error {
+func (b *Body) UnmarshalJSON(data []byte) error {
 	type tmp *Body
-	return unmarshalJSON(tmp(e), data)
+	return unmarshalJSON(tmp(b), data)
 }
 
-func (e *Link) UnmarshalJSON(data []byte) error {
+func (l *Link) UnmarshalJSON(data []byte) error {
 	type tmp *Link
-	return unmarshalJSON(tmp(e), data)
+	return unmarshalJSON(tmp(l), data)
 }
 
-func (e *User) UnmarshalJSON(data []byte) error {
+func (u *User) UnmarshalJSON(data []byte) error {
 	type tmp *User
-	return unmarshalJSON(tmp(e), data)
+	return unmarshalJSON(tmp(u), data)
 }
 
-func (e *Image) UnmarshalJSON(data []byte) error {
+func (i *Image) UnmarshalJSON(data []byte) error {
 	if string(data) == "[]" {
 		return nil
 	}
 
 	type tmp *Image
-	if err := unmarshalJSON(tmp(e), data); err != nil {
+	if err := unmarshalJSON(tmp(i), data); err != nil {
 		return err
 	}
 	return nil

@@ -32,7 +32,11 @@ func TestEvent(t *testing.T) {
 	if value.Image.File.ReferenceId != "1d978950-9016-4451-84ba-4f7d5817abe2" {
 		t.Errorf("Expected Image File Id '1d978950-9016-4451-84ba-4f7d5817abe2', got: %s", value.Image.File.ReferenceId)
 	}
-
+	if len(value.Offline) != 1 {
+		t.Errorf("Expected event to have 1 location")
+	} else if value.Offline[0].UUID != "0db82018-d5e8-419d-8fe4-ec6f945415b3" {
+		t.Errorf("Expected Offline UUID '0db82018-d5e8-419d-8fe4-ec6f945415b3', got: %s", value.Offline[0].UUID)
+	}
 }
 
 func TestEventNoImage(t *testing.T) {
