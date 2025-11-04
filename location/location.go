@@ -49,19 +49,28 @@ type Map struct {
 	SchemaOrgShape string `json:"schemaorg_shape"`
 }
 
-func (e *Location) UnmarshalJSON(data []byte) error {
+func (l *Location) UnmarshalJSON(data []byte) error {
 	type tmp *Location
-	return unmarshalJSON(tmp(e), data)
+	if err := unmarshalJSON(tmp(l), data); err != nil {
+		return err
+	}
+	// There is an inconsistency in the api: when querying events the `UUID` is
+	// missing from the location and the `Id` field is holding the `UUID` value
+	// instead.
+	if len(l.UUID) == 0 {
+		l.UUID = l.Id
+	}
+	return nil
 }
 
-func (e *Address) UnmarshalJSON(data []byte) error {
+func (a *Address) UnmarshalJSON(data []byte) error {
 	type tmp *Address
-	return unmarshalJSON(tmp(e), data)
+	return unmarshalJSON(tmp(a), data)
 }
 
-func (e *Map) UnmarshalJSON(data []byte) error {
+func (m *Map) UnmarshalJSON(data []byte) error {
 	type tmp *Map
-	return unmarshalJSON(tmp(e), data)
+	return unmarshalJSON(tmp(m), data)
 }
 
 func unmarshalJSON(e interface{}, data []byte) error {
