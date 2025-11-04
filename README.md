@@ -5,9 +5,11 @@
 
 Golang bindings for the [Radar](https://radar.squat.net/en) API.
 
-## Hack
+## Development
+Commits should be based on [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
-### Test
+### Tests
+Run with:
 
 ```
 go test
