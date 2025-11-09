@@ -51,6 +51,13 @@ func WithLogger(logger *slog.Logger) func(*RadarClient) {
 	}
 }
 
+// WithClient configures a client for RadarClient.
+func WithClient(httpClient *http.Client) func(*RadarClient) {
+	return func(r *RadarClient) {
+		r.web = httpClient
+	}
+}
+
 // Returns an instance of RadarClient which can be used to interact with the
 // radar server.
 func NewRadarClient(opts ...func(*RadarClient)) *RadarClient {
@@ -75,6 +82,10 @@ func (radar *RadarClient) SetBaseUrl(baseUrl string) {
 
 func (radar *RadarClient) GetLogger() *slog.Logger {
 	return radar.log
+}
+
+func (radar *RadarClient) GetClient() *http.Client {
+	return radar.web
 }
 
 func (radar *RadarClient) GetTimeout() int {

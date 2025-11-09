@@ -2,8 +2,10 @@ package radarapi
 
 import (
 	"log/slog"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestWithTimeout(t *testing.T) {
@@ -23,5 +25,16 @@ func TestWithLoggerLevel(t *testing.T) {
 	}
 	if radarClient.GetLogger().Enabled(nil, slog.LevelDebug) {
 		t.Errorf("expected a max log level of warn, got debug")
+	}
+}
+
+func TestWithClient(t *testing.T) {
+	var (
+		expect = 1312 * time.Second
+		client = &http.Client{Timeout: 1312 * time.Second}
+	)
+	radarClient := NewRadarClient(WithClient(client))
+	if radarClient.GetClient().Timeout != expect {
+		t.Errorf("expected timeout of 1312 seconds")
 	}
 }
