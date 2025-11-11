@@ -15,9 +15,27 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.25.x"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install Commitizen
+        run: pip install commitizen
       - name: Install dependencies
         run: go get .
       - name: Build
         run: go build -v ./...
       - name: Test with the Go CLI
         run: go test
+      - name: Fetch base branch
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            git fetch origin ${{ github.event.pull_request.base.ref }} \
+              --depth=1
+          fi
+      - name: Verify commit messages
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            cz check --rev-range \
+              ${{ github.event.pull_request.base.sha }}..HEAD
+          fi
