@@ -8,13 +8,6 @@ import (
 	"strings"
 )
 
-type SearchResultTerms struct {
-	Results map[string]*term.Term `json:"result"`
-	// Number of results. Only the first 500 are actually returned.
-	Count  int64                     `json:"count"`
-	Facets map[string][]*ResultFacet `json:"facets"`
-}
-
 // Get the Term associated with uuid. If no fields are specified the default are returned.
 func (radar *RadarClient) Term(uuid string, language *lang.Tag, fields ...string) (*term.Term, error) {
 	rawUrl := fmt.Sprintf("taxonomy_term/%s.json", uuid)

@@ -177,7 +177,7 @@ func ExampleRadarClient_search_group() {
 	radar := NewRadarClient()
 	sb := radar.NewSearchBuilder()
 	sb.Facets(Facet{group.FacetCity, "berlin"}, Facet{group.FacetCategory, "bar-cafe"})
-	result, err := radar.SearchGroup(sb)
+	result, err := radar.SearchGroups(sb)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
