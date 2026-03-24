@@ -3,10 +3,13 @@ package radarapi
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/goapunk/radar-api-go/event"
+	"github.com/goapunk/radar-api-go/group"
+	"github.com/goapunk/radar-api-go/location"
+	"github.com/goapunk/radar-api-go/term"
 	"log/slog"
 	"net/url"
 	"strconv"
-	"strings"
 
 	lang "golang.org/x/text/language"
 )
@@ -75,6 +78,35 @@ func (e *ResultFacet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Wrapper for the count field in the search result, because it can be either a string or an int in the API response.
+type FlexInt64 int64
+
+func (fi *FlexInt64) UnmarshalJSON(b []byte) error {
+	if len(b) == 0 {
+		return nil
+	}
+
+	var i int64
+	if err := json.Unmarshal(b, &i); err == nil {
+		*fi = FlexInt64(i)
+		return nil
+	}
+
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+
+	return json.Unmarshal([]byte(s), &i)
+}
+
+type SearchResult[T any] struct {
+	RawResults json.RawMessage           `json:"result"`
+	Results    map[string]*T             `json:"-"`
+	Count      FlexInt64                 `json:"count"`
+	Facets     map[string][]*ResultFacet `json:"facets"`
+}
+
 func (radar *RadarClient) NewSearchBuilder() *SearchBuilder {
 	return &SearchBuilder{
 		baseUrl: radar.baseUrl,
@@ -83,90 +115,55 @@ func (radar *RadarClient) NewSearchBuilder() *SearchBuilder {
 }
 
 // Search the radar database for Events. Returns nil if no results were found.
-func (radar *RadarClient) SearchEvents(sb *SearchBuilder) (*SearchResultEvents, error) {
+func (radar *RadarClient) SearchEvents(sb *SearchBuilder) (*SearchResult[event.Event], error) {
 	sb.entity = typeEvent
-	res, err := radar.search(sb)
-	if err != nil {
-		return nil, err
-	}
-	if res == nil {
-		return nil, nil
-	}
-	return res.(*SearchResultEvents), nil
+	return performSearch[event.Event](radar, sb)
 }
 
 // Search the radar database for Groups. Returns nil if no results were found.
-func (radar *RadarClient) SearchGroup(sb *SearchBuilder) (*SearchResultGroups, error) {
+func (radar *RadarClient) SearchGroups(sb *SearchBuilder) (*SearchResult[group.Group], error) {
 	sb.entity = typeGroup
-	res, err := radar.search(sb)
-	if err != nil {
-		return nil, err
-	}
-	if res == nil {
-		return nil, nil
-	}
-	return res.(*SearchResultGroups), nil
+	return performSearch[group.Group](radar, sb)
 }
 
 // Search the radar database for Locations. Returns nil if no results were found.
 //
 // Note: By default, no fields are returned for the locations. Use SearchBuilder.Fields() to get a meaningful response.
-func (radar *RadarClient) SearchLocation(sb *SearchBuilder) (*SearchResultLocations, error) {
+func (radar *RadarClient) SearchLocation(sb *SearchBuilder) (*SearchResult[location.Location], error) {
 	sb.entity = typeLocation
-	res, err := radar.search(sb)
-	if err != nil {
-		return nil, err
-	}
-	if res == nil {
-		return nil, nil
-	}
-	return res.(*SearchResultLocations), nil
+	return performSearch[location.Location](radar, sb)
 }
 
 // Search the radar database for Terms. Returns nil if no result were found.
-func (radar *RadarClient) SearchTerm(sb *SearchBuilder) (*SearchResultTerms, error) {
+func (radar *RadarClient) SearchTerm(sb *SearchBuilder) (*SearchResult[term.Term], error) {
 	sb.entity = typeTerm
-	res, err := radar.search(sb)
-	if err != nil {
-		return nil, err
-	}
-	if res == nil {
-		return nil, nil
-	}
-	return res.(*SearchResultTerms), nil
+	return performSearch[term.Term](radar, sb)
 }
 
-func (radar *RadarClient) search(sb *SearchBuilder) (interface{}, error) {
+func performSearch[T any](radar *RadarClient, sb *SearchBuilder) (*SearchResult[T], error) {
 	u, err := prepareSearchUrl(sb)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	raw, err := radar.runQuery(u)
 	if err != nil {
 		return nil, err
 	}
-	if raw == `{"result":false,"count":0,"facets":null}` {
+
+	var res SearchResult[T]
+	if err := json.Unmarshal([]byte(raw), &res); err != nil {
+		return nil, err
+	}
+
+	if string(res.RawResults) == "false" {
 		return nil, nil
 	}
-	dec := json.NewDecoder(strings.NewReader(raw))
-	//	dec.DisallowUnknownFields()
-	var buf interface{}
-	switch sb.entity {
-	case typeEvent:
-		buf = &SearchResultEvents{}
-	case typeGroup:
-		buf = &SearchResultGroups{}
-	case typeLocation:
-		buf = &SearchResultLocations{}
-	case typeTerm:
-		buf = &SearchResultTerms{}
-	}
-	err = dec.Decode(buf)
 
-	if err != nil {
-		return nil, fmt.Errorf("error: %v", err)
+	if err := json.Unmarshal(res.RawResults, &res.Results); err != nil {
+		return nil, fmt.Errorf("error decoding results map: %v", err)
 	}
-	return buf, nil
+
+	return &res, nil
 }
 
 // Sets a key for full-text search.
@@ -246,14 +243,12 @@ func prepareSearchUrl(sb *SearchBuilder) (*url.URL, error) {
 	}
 	if sb.filters != nil {
 		for _, f := range sb.filters {
-			switch f.(type) {
-			case filter:
-				nf := f.(filter)
-				query.Add(fmt.Sprintf("filter[%s][%s][~%s]", nf.operator, nf.field, nf.comparator), nf.value)
-			case rangeFilter:
-				rf := f.(rangeFilter)
-				query.Add(fmt.Sprintf("filter[~and][%s][~gte]", rf.field), rf.from)
-				query.Add(fmt.Sprintf("filter[~or][%s][~lte]", rf.field), rf.to)
+			switch v := f.(type) {
+			case *filter:
+				query.Add(fmt.Sprintf("filter[%s][%s][~%s]", v.operator, v.field, v.comparator), v.value)
+			case *rangeFilter:
+				query.Add(fmt.Sprintf("filter[~and][%s][~gte]", v.field), v.from)
+				query.Add(fmt.Sprintf("filter[~or][%s][~lte]", v.field), v.to)
 			}
 		}
 	}
